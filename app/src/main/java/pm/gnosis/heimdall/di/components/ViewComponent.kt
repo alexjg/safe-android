@@ -10,8 +10,11 @@ import pm.gnosis.heimdall.ui.addressbook.edit.AddressBookEditEntryActivity
 import pm.gnosis.heimdall.ui.addressbook.list.AddressBookActivity
 import pm.gnosis.heimdall.ui.debugsettings.DebugSettingsActivity
 import pm.gnosis.heimdall.ui.dialogs.ens.EnsInputDialog
+import pm.gnosis.heimdall.ui.nfc.NfcSigningDialog
 import pm.gnosis.heimdall.ui.dialogs.share.SimpleAddressShareDialog
 import pm.gnosis.heimdall.ui.messagesigning.ConfirmMessageActivity
+import pm.gnosis.heimdall.ui.nfc.NfcListActivity
+import pm.gnosis.heimdall.ui.nfc.NfcPairingDialog
 import pm.gnosis.heimdall.ui.onboarding.fingerprint.FingerprintSetupActivity
 import pm.gnosis.heimdall.ui.onboarding.password.PasswordConfirmActivity
 import pm.gnosis.heimdall.ui.onboarding.password.PasswordSetupActivity
@@ -94,6 +97,7 @@ interface ViewComponent {
     fun inject(activity: ScanExtensionAddressActivity)
     fun inject(activity: FingerprintSetupActivity)
     fun inject(activity: ManageTokensActivity)
+    fun inject(activity: NfcListActivity)
     fun inject(activity: DebugSettingsActivity)
     fun inject(activity: PairingActivity)
     fun inject(activity: PasswordConfirmActivity)
@@ -121,6 +125,8 @@ interface ViewComponent {
     fun inject(dialog: ChangePasswordDialog)
     fun inject(dialog: EnsInputDialog)
     fun inject(dialog: FingerprintDialog)
+    fun inject(dialog: NfcPairingDialog)
+    fun inject(dialog: NfcSigningDialog)
     fun inject(dialog: PaymentTokenDialog)
     fun inject(dialog: SimpleAddressShareDialog)
     fun inject(dialog: UnlockDialog)

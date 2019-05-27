@@ -18,6 +18,7 @@ import pm.gnosis.heimdall.di.components.ViewComponent
 import pm.gnosis.heimdall.helpers.ToolbarHelper
 import pm.gnosis.heimdall.reporting.ScreenId
 import pm.gnosis.heimdall.ui.base.ViewModelActivity
+import pm.gnosis.heimdall.ui.nfc.NfcPairingDialog
 import pm.gnosis.heimdall.ui.qrscan.QRCodeScanActivity
 import pm.gnosis.heimdall.utils.handleQrCodeActivityResult
 import pm.gnosis.model.Solidity
@@ -25,7 +26,7 @@ import pm.gnosis.svalinn.common.utils.*
 import timber.log.Timber
 import javax.inject.Inject
 
-abstract class PairingActivity : ViewModelActivity<PairingContract>() {
+abstract class PairingActivity : ViewModelActivity<PairingContract>(), NfcPairingDialog.NfcPairingCallback {
     @Inject
     lateinit var toolbarHelper: ToolbarHelper
 
@@ -56,7 +57,17 @@ abstract class PairingActivity : ViewModelActivity<PairingContract>() {
 
         disposables += layout_pairing_scan.clicks()
             .subscribeBy(
-                onNext = { QRCodeScanActivity.startForResult(this) },
+                onNext = {
+                    QRCodeScanActivity.startForResult(this)
+                },
+                onError = Timber::e
+            )
+
+        disposables += layout_pairing_nfc.clicks()
+            .subscribeBy(
+                onNext = {
+                    NfcPairingDialog.create().show(supportFragmentManager, null)
+                },
                 onError = Timber::e
             )
 
@@ -64,6 +75,10 @@ abstract class PairingActivity : ViewModelActivity<PairingContract>() {
             .subscribeBy(onNext = { onBackPressed() }, onError = Timber::e)
 
         disposables += toolbarHelper.setupShadow(layout_pairing_toolbar_shadow, layout_pairing_content_scroll)
+    }
+
+    override fun pairedToKeyCard(address: Solidity.Address) {
+        onSuccess(address)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

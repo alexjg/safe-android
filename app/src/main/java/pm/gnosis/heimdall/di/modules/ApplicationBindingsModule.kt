@@ -82,6 +82,10 @@ abstract class ApplicationBindingsModule {
 
     @Binds
     @Singleton
+    abstract fun bindsKeyCardRepository(repository: StatusKeyCardRepository): KeyCardRepository
+
+    @Binds
+    @Singleton
     abstract fun bindsPushServiceRepository(repository: DefaultPushServiceRepository): PushServiceRepository
 
     @Binds

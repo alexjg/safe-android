@@ -104,12 +104,24 @@
         android:layout_width="0dp"
         android:layout_height="46dp"
         android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="8dp"
         android:layout_marginBottom="16dp"
         android:text="@string/scan_qr_code"
         app:layout_constraintBottom_toTopOf="@+id/layout_pairing_later"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/layout_pairing_nfc"
         app:layout_constraintStart_toStartOf="parent" />
+    <TextView
+        android:id="@+id/layout_pairing_nfc"
+        style="@style/PrimaryButton.Blue.Round"
+        android:layout_width="0dp"
+        android:layout_height="46dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:text="Pair to KeyCard"
+        app:layout_constraintBottom_toTopOf="@+id/layout_pairing_later"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/layout_pairing_scan" />
 
     <TextView
         android:id="@+id/layout_pairing_later"

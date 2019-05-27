@@ -3,9 +3,9 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:background="@color/pale_grey_two"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:background="@color/pale_grey_two">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -144,10 +144,10 @@
             android:paddingBottom="12dp"
             android:text="@string/retry"
             android:visibility="gone"
-            tools:visibility="visible"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/include_transaction_submit_info_confirmation_progress" />
+            app:layout_constraintTop_toBottomOf="@+id/include_transaction_submit_info_confirmation_progress"
+            tools:visibility="visible" />
 
 
         <androidx.constraintlayout.widget.Group
@@ -155,7 +155,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="gone"
-            app:constraint_referenced_ids="include_transaction_submit_info_confirmations_image,include_transaction_submit_info_confirmations_info,include_transaction_submit_info_confirmations_timer,include_transaction_submit_info_request_button" />
+            app:constraint_referenced_ids="include_transaction_submit_info_confirmations_image,include_transaction_submit_info_confirmations_info,include_transaction_submit_info_confirmations_timer,include_transaction_submit_info_request_button,include_transaction_submit_info_nfc_button"
+            tools:visibility="gone" />
 
         <ImageView
             android:id="@+id/include_transaction_submit_info_confirmations_image"
@@ -222,5 +223,25 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/include_transaction_submit_info_confirmations_timer" />
+
+
+        <TextView
+            android:id="@+id/include_transaction_submit_info_nfc_button"
+            style="@style/PrimaryButton.White"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginTop="8dp"
+            android:fontFamily="monospace-medium"
+            android:gravity="center"
+            android:paddingBottom="8dp"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:paddingTop="8dp"
+            android:text="Sign with KeyCard"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/include_transaction_submit_info_request_button" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>

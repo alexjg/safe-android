@@ -48,7 +48,9 @@ interface SubmitTransactionHelper {
 
     sealed class ViewUpdate {
         data class TransactionInfo(val viewHolder: TransactionInfoViewHolder) : ViewUpdate()
-        data class Estimate(val fees: BigInteger, val balance: BigInteger, val token: ERC20Token, val canSubmit: Boolean) : ViewUpdate()
+        data class Estimate(val hash: String, val fees: BigInteger, val balance: BigInteger, val token: ERC20Token, val canSubmit: Boolean) :
+            ViewUpdate()
+
         object EstimateError : ViewUpdate()
         data class Confirmations(val isReady: Boolean) : ViewUpdate()
         object ConfirmationsRequested : ViewUpdate()
@@ -135,7 +137,9 @@ class DefaultSubmitTransactionHelper @Inject constructor(
             }
             .emitAndNext(
                 emit = {
-                    it.map { (execInfo, token, canSubmit) -> ViewUpdate.Estimate(execInfo.gasCosts(), execInfo.balance, token, canSubmit) }
+                    it.map { (execInfo, token, canSubmit) ->
+                        ViewUpdate.Estimate(execInfo.transactionHash, execInfo.gasCosts(), execInfo.balance, token, canSubmit)
+                    }
                 },
                 next = { confirmations(events, it, initialSignatures) })
 
@@ -240,7 +244,10 @@ class DefaultSubmitTransactionHelper @Inject constructor(
                 .flatMap {
                     when (it) {
                         is DataResult -> Observable.just(DataResult(ViewUpdate.ConfirmationsRequested))
-                        is ErrorResult -> Observable.fromArray(DataResult(ViewUpdate.ConfirmationsError), ErrorResult<ViewUpdate>(it.error))
+                        is ErrorResult -> {
+                            Timber.e(it.error)
+                            Observable.fromArray(DataResult(ViewUpdate.ConfirmationsError))
+                        }
                     }
                 }
 

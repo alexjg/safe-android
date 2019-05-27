@@ -5,6 +5,7 @@ import android.content.res.ColorStateList
 import android.graphics.PorterDuff
 import android.view.LayoutInflater
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import com.jakewharton.rxbinding2.view.clicks
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -12,6 +13,7 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
 import kotlinx.android.synthetic.main.include_transaction_submit_info.view.*
 import pm.gnosis.heimdall.R
+import pm.gnosis.heimdall.ui.nfc.NfcSigningDialog
 import pm.gnosis.heimdall.ui.transactions.view.TransactionInfoViewHolder
 import pm.gnosis.svalinn.common.utils.getColorCompat
 import pm.gnosis.svalinn.common.utils.visible
@@ -102,6 +104,9 @@ class TransactionSubmitInfoViewHelper @Inject constructor() {
                 view.include_transaction_submit_info_data_fees_value.text = "- ${update.token.displayString(update.fees)}"
                 view.include_transaction_submit_info_confirmations_group.visible(update.canSubmit)
                 view.include_transaction_submit_info_retry_button.visible(!update.canSubmit)
+                view.include_transaction_submit_info_nfc_button.setOnClickListener {
+                    (context as? AppCompatActivity)?.apply { NfcSigningDialog.create(update.hash).show(supportFragmentManager, null) }
+                }
             }
             is SubmitTransactionHelper.ViewUpdate.EstimateError -> {
                 view.include_transaction_submit_info_confirmation_progress.visible(false)

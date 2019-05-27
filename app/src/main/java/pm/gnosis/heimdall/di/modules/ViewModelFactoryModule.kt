@@ -15,6 +15,8 @@ import pm.gnosis.heimdall.ui.debugsettings.DebugSettingsContract
 import pm.gnosis.heimdall.ui.debugsettings.DebugSettingsViewModel
 import pm.gnosis.heimdall.ui.dialogs.ens.EnsInputContract
 import pm.gnosis.heimdall.ui.dialogs.ens.EnsInputViewModel
+import pm.gnosis.heimdall.ui.nfc.NfcContract
+import pm.gnosis.heimdall.ui.nfc.NfcViewModel
 import pm.gnosis.heimdall.ui.messagesigning.ConfirmMessageContract
 import pm.gnosis.heimdall.ui.messagesigning.ConfirmMessageViewModel
 import pm.gnosis.heimdall.ui.onboarding.fingerprint.FingerprintSetupContract
@@ -150,6 +152,11 @@ abstract class ViewModelFactoryModule {
     @IntoMap
     @ViewModelKey(ManageTokensContract::class)
     abstract fun bindsManageTokensContract(viewModel: ManageTokensViewModel): ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelKey(NfcContract::class)
+    abstract fun bindsNfcSigningContract(viewModel: NfcViewModel): ViewModel
 
 
     @Binds
