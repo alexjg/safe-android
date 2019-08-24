@@ -11,6 +11,7 @@ import pm.gnosis.heimdall.ui.debugsettings.DebugSettingsActivity
 import pm.gnosis.heimdall.ui.dialogs.ens.EnsInputDialog
 import pm.gnosis.heimdall.ui.dialogs.share.SimpleAddressShareDialog
 import pm.gnosis.heimdall.ui.messagesigning.ConfirmMessageActivity
+import pm.gnosis.heimdall.ui.modules.location.LocationRecoveryActivity
 import pm.gnosis.heimdall.ui.onboarding.fingerprint.FingerprintSetupActivity
 import pm.gnosis.heimdall.ui.onboarding.password.PasswordConfirmActivity
 import pm.gnosis.heimdall.ui.onboarding.password.PasswordSetupActivity
@@ -101,6 +102,7 @@ interface ViewComponent {
     fun inject(activity: DebugSettingsActivity)
     fun inject(activity: FingerprintSetupActivity)
     fun inject(activity: GeneralSettingsActivity)
+    fun inject(activity: LocationRecoveryActivity)
     fun inject(activity: ManageTokensActivity)
     fun inject(activity: PairingActivity)
     fun inject(activity: PasswordConfirmActivity)

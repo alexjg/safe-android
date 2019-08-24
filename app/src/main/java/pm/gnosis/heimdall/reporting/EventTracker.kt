@@ -79,6 +79,7 @@ enum class ScreenId {
     WELCOME_TERMS,
 
     DIALOG_SHARE_ADDRESS,
+    LOCATION_RECOVERY
 }
 
 enum class ButtonId

@@ -480,4 +480,7 @@ Without it, you won’t be able to recover your Safe and money.</string>
     <string name="balance">Balance</string>
     <string name="change_fee_method">Change fee payment method</string>
     <string name="pay_with">Pay with %s</string>
+    <string name="enable_location_recovery">Enabled location recovery</string>
+    <string name="enable_location_recovery_description">We implemented this really cool thing at ETHBerlinZwei and you should use it!!!!!</string>
+    <string name="notification_new_location_recovery_request">New location recovery request to review</string>
 </resources>

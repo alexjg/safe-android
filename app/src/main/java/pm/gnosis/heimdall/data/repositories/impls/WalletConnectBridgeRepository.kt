@@ -31,6 +31,7 @@ import pm.gnosis.heimdall.data.repositories.models.SafeTransaction
 import pm.gnosis.heimdall.di.ApplicationContext
 import pm.gnosis.heimdall.helpers.LocalNotificationManager
 import pm.gnosis.heimdall.services.BridgeService
+import pm.gnosis.heimdall.ui.modules.location.LocationRecoveryActivity
 import pm.gnosis.heimdall.ui.transactions.view.review.ReviewTransactionActivity
 import pm.gnosis.heimdall.utils.shortChecksumString
 import pm.gnosis.model.Solidity
@@ -198,6 +199,23 @@ class WalletConnectBridgeRepository @Inject constructor(
                             call.apply {
                                 sessionRequests[id] = sessionId
                                 try {
+                                    if (method == "gs_enableLocationRecovery") {
+                                        val data = (params as List<Any>)
+                                        val safe = (data.first() as String)
+                                        if (session.approvedAccounts()?.contains(safe) != true)
+                                            throw IllegalArgumentException("Invalid Safe address: $safe")
+                                        val locations = (data[1] as List<String>)
+                                        val delay = (data[2] as Number).toLong()
+                                        showEnableLocationRecoveryNotification(
+                                            session.peerMeta(),
+                                            safe.asEthereumAddress()!!,
+                                            locations,
+                                            delay,
+                                            id,
+                                            sessionId
+                                        )
+                                        return
+                                    }
                                     rpcProxyApi.proxy(RpcProxyApi.ProxiedRequest(method, (params as? List<Any>) ?: emptyList(), id))
                                         .subscribeBy(onError = { t ->
                                             rejectRequest(id, 42, t.message ?: "Could not handle custom call")
@@ -273,6 +291,31 @@ class WalletConnectBridgeRepository @Inject constructor(
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
         }
+    }
+
+    private fun showEnableLocationRecoveryNotification(
+        peerMeta: Session.PeerMeta?,
+        safe: Solidity.Address,
+        locations: List<String>,
+        delay: Long,
+        referenceId: Long,
+        sessionId: String
+    ) {
+        val intent = LocationRecoveryActivity.createIntent(context, safe, locations, delay, referenceId, sessionId)
+        val icon = peerMeta?.icons?.firstOrNull()?.let { nullOnThrow { picasso.load(it).get() } }
+        val notification = localNotificationManager.builder(
+            peerMeta?.name ?: context.getString(R.string.unknown_dapp),
+            context.getString(R.string.notification_new_location_recovery_request),
+            PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT),
+            CHANNEL_WALLET_CONNECT_REQUESTS
+        )
+            .setSubText(safe.shortChecksumString())
+            .setLargeIcon(icon)
+            .build()
+        localNotificationManager.show(
+            referenceId.hashCode(),
+            notification
+        )
     }
 
     override fun createSession(url: String, safe: Solidity.Address): String =
