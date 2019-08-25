@@ -17,19 +17,19 @@ import pm.gnosis.heimdall.ui.base.ViewModelActivity
 import pm.gnosis.heimdall.ui.transactions.view.review.ReviewTransactionActivity
 import pm.gnosis.model.Solidity
 import pm.gnosis.utils.asEthereumAddress
+import pm.gnosis.utils.asEthereumAddressString
 import pm.gnosis.utils.hexStringToByteArray
-import pm.gnosis.utils.toHexString
 import java.math.BigInteger
 import javax.inject.Inject
 
 class LocationRecoveryViewModel @Inject constructor() : LocationRecoveryContract() {
-    override fun createSafeTransaction(locations: List<String>, delay: Long): TransactionData {
-        val initData = KeccakRecoveryModule.Setup.encode(
-            Solidity.Bytes32(byteArrayOf()),
+    override fun createSafeTransaction(recoverer: Solidity.Address, delay: Long): TransactionData {
+        val initData = SimpleRecoveryModule.Setup.encode(
+            recoverer,
             Solidity.UInt256(delay.toBigInteger())
         )
         val proxyData = ProxyFactory.CreateProxy.encode(
-            BuildConfig.LOCATION_RECOVERY_MODULE_MASTER_COPY_ADDRESS.asEthereumAddress()!!,
+            BuildConfig.SIMPLE_RECOVERY_MODULE_MASTER_COPY_ADDRESS.asEthereumAddress()!!,
             Solidity.Bytes(initData.hexStringToByteArray())
         )
         val setupData = Solidity.Bytes(proxyData.hexStringToByteArray()).encode()
@@ -47,7 +47,7 @@ class LocationRecoveryViewModel @Inject constructor() : LocationRecoveryContract
 }
 
 abstract class LocationRecoveryContract : ViewModel() {
-    abstract fun createSafeTransaction(locations: List<String>, delay: Long): TransactionData
+    abstract fun createSafeTransaction(recoverer: Solidity.Address, delay: Long): TransactionData
 }
 
 class LocationRecoveryActivity : ViewModelActivity<LocationRecoveryContract>() {
@@ -67,9 +67,9 @@ class LocationRecoveryActivity : ViewModelActivity<LocationRecoveryContract>() {
         super.onCreate(savedInstanceState)
         location_recovery_back_arrow.setOnClickListener { onBackPressed() }
         location_recovery_submit.setOnClickListener {
-            val locations = intent.getStringArrayListExtra(EXTRA_LOCATIONS)
+            val recoverer = intent.getStringExtra(EXTRA_RECOVERER_ADDRESS).asEthereumAddress()!!
             val delay = intent.getLongExtra(EXTRA_DELAY, 0)
-            val data = viewModel.createSafeTransaction(locations, delay)
+            val data = viewModel.createSafeTransaction(recoverer, delay)
             val referenceId = intent.getLongExtra(EXTRA_REFERENCE_ID, 0)
             val sessionId = intent.getStringExtra(EXTRA_SESSION_ID)
             startActivity(ReviewTransactionActivity.createIntent(this, safe, data, referenceId, sessionId))
@@ -86,7 +86,7 @@ class LocationRecoveryActivity : ViewModelActivity<LocationRecoveryContract>() {
 
     companion object {
         private const val EXTRA_SAFE_ADDRESS = "extra.string.safe_address"
-        private const val EXTRA_LOCATIONS = "extra.string_array.locations"
+        private const val EXTRA_RECOVERER_ADDRESS = "extra.string.recoverer_address"
         private const val EXTRA_DELAY = "extra.long.delay"
         private const val EXTRA_REFERENCE_ID = "extra.long.reference_id"
         private const val EXTRA_SESSION_ID = "extra.string.session_id"
@@ -94,14 +94,14 @@ class LocationRecoveryActivity : ViewModelActivity<LocationRecoveryContract>() {
         fun createIntent(
             context: Context,
             safe: Solidity.Address,
-            locations: List<String>,
+            recoverer: Solidity.Address,
             delay: Long,
             referenceId: Long? = null,
             sessionId: String? = null
         ) =
             Intent(context, LocationRecoveryActivity::class.java).apply {
-                putExtra(EXTRA_SAFE_ADDRESS, safe.value.toHexString())
-                putStringArrayListExtra(EXTRA_LOCATIONS, ArrayList(locations))
+                putExtra(EXTRA_SAFE_ADDRESS, safe.asEthereumAddressString())
+                putExtra(EXTRA_RECOVERER_ADDRESS, recoverer.asEthereumAddressString())
                 putExtra(EXTRA_DELAY, delay)
                 referenceId?.let { putExtra(EXTRA_REFERENCE_ID, it) }
                 putExtra(EXTRA_SESSION_ID, sessionId)

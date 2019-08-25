@@ -199,17 +199,17 @@ class WalletConnectBridgeRepository @Inject constructor(
                             call.apply {
                                 sessionRequests[id] = sessionId
                                 try {
-                                    if (method == "gs_enableLocationRecovery") {
+                                    if (method == "gs_enableSimpleRecovery") {
                                         val data = (params as List<Any>)
                                         val safe = (data.first() as String)
-                                        if (session.approvedAccounts()?.contains(safe) != true)
+                                        if (session.approvedAccounts()?.contains(safe.toLowerCase()) != true)
                                             throw IllegalArgumentException("Invalid Safe address: $safe")
-                                        val locations = (data[1] as List<String>)
+                                        val recoverer = (data[1] as String).asEthereumAddress()!!
                                         val delay = (data[2] as Number).toLong()
                                         showEnableLocationRecoveryNotification(
                                             session.peerMeta(),
                                             safe.asEthereumAddress()!!,
-                                            locations,
+                                            recoverer,
                                             delay,
                                             id,
                                             sessionId
@@ -296,16 +296,16 @@ class WalletConnectBridgeRepository @Inject constructor(
     private fun showEnableLocationRecoveryNotification(
         peerMeta: Session.PeerMeta?,
         safe: Solidity.Address,
-        locations: List<String>,
+        recoverer: Solidity.Address,
         delay: Long,
         referenceId: Long,
         sessionId: String
     ) {
-        val intent = LocationRecoveryActivity.createIntent(context, safe, locations, delay, referenceId, sessionId)
+        val intent = LocationRecoveryActivity.createIntent(context, safe, recoverer, delay, referenceId, sessionId)
         val icon = peerMeta?.icons?.firstOrNull()?.let { nullOnThrow { picasso.load(it).get() } }
         val notification = localNotificationManager.builder(
             peerMeta?.name ?: context.getString(R.string.unknown_dapp),
-            context.getString(R.string.notification_new_location_recovery_request),
+            context.getString(R.string.notification_new_recovery_request),
             PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT),
             CHANNEL_WALLET_CONNECT_REQUESTS
         )
