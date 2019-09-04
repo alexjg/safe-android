@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.moshi.Moshi
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.consumeEach
@@ -22,6 +23,7 @@ import pm.gnosis.heimdall.data.repositories.models.ERC20Token
 import pm.gnosis.heimdall.data.repositories.models.ERC20TokenWithBalance
 import pm.gnosis.heimdall.ui.safe.helpers.RecoverSafeOwnersHelper
 import pm.gnosis.model.Solidity
+import timber.log.Timber
 import java.math.BigInteger
 import java.math.RoundingMode
 import java.util.concurrent.TimeUnit
@@ -75,6 +77,12 @@ class PairingAuthenticatorViewModel @Inject constructor(
     private val moshi: Moshi
 ) : PairingAuthenticatorContract() {
 
+    private val errorHandler = CoroutineExceptionHandler { _, e ->
+        viewModelScope.launch {
+            Timber.e(e)
+        }
+    }
+
     override val observableState: LiveData<ViewUpdate>
         get() = _state
     private val _state = MutableLiveData<ViewUpdate>()
@@ -89,7 +97,7 @@ class PairingAuthenticatorViewModel @Inject constructor(
 
     override fun estimate() {
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO + errorHandler) {
 
             val safeInfo = gnosisSafeRepository.loadInfo(safeAddress).awaitFirst()
             val paymentToken = tokenRepository.loadPaymentToken(safeAddress).await()
@@ -137,7 +145,7 @@ class PairingAuthenticatorViewModel @Inject constructor(
 
     override fun pair(payload: String) {
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO + errorHandler) {
 
             _state.postValue(
                 ViewUpdate.Pairing(true)
