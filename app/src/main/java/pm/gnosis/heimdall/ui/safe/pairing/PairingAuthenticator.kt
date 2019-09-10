@@ -5,15 +5,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.moshi.Moshi
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.coroutines.rx2.await
 import kotlinx.coroutines.rx2.awaitFirst
-import kotlinx.coroutines.rx2.openSubscription
 import pm.gnosis.heimdall.data.remote.models.push.PushServiceTemporaryAuthorization
 import pm.gnosis.heimdall.data.repositories.GnosisSafeRepository
 import pm.gnosis.heimdall.data.repositories.PushServiceRepository
@@ -21,12 +15,12 @@ import pm.gnosis.heimdall.data.repositories.TokenRepository
 import pm.gnosis.heimdall.data.repositories.TransactionExecutionRepository
 import pm.gnosis.heimdall.data.repositories.models.ERC20Token
 import pm.gnosis.heimdall.data.repositories.models.ERC20TokenWithBalance
+import pm.gnosis.heimdall.data.repositories.models.SafeTransaction
 import pm.gnosis.heimdall.ui.safe.helpers.RecoverSafeOwnersHelper
 import pm.gnosis.model.Solidity
 import timber.log.Timber
 import java.math.BigInteger
 import java.math.RoundingMode
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 abstract class PairingAuthenticatorContract : ViewModel() {
@@ -89,57 +83,55 @@ class PairingAuthenticatorViewModel @Inject constructor(
 
     private lateinit var safeAddress: Solidity.Address
 
-    private lateinit var balanceChannel: ReceiveChannel<Pair<ERC20Token, BigInteger?>>
+    private lateinit var paymentToken: ERC20Token
+    private lateinit var pairingTransaction: SafeTransaction
+
 
     override fun setup(safeAddress: Solidity.Address) {
         this.safeAddress = safeAddress
+        runBlocking(Dispatchers.IO + errorHandler) {
+            loadPaymentToken()
+            buildPairingTransaction()
+        }
+    }
+
+    private suspend fun loadPaymentToken() = coroutineScope {
+        paymentToken = tokenRepository.loadPaymentToken(safeAddress).await()
+    }
+
+    private suspend fun buildPairingTransaction() = coroutineScope {
+
+        val safeInfo = gnosisSafeRepository.loadInfo(safeAddress).awaitFirst()
+
+        val owner = safeInfo.owners[0]
+        val extension = Solidity.Address(BigInteger.valueOf(Long.MAX_VALUE))
+        pairingTransaction = recoverSafeOwnersHelper.buildRecoverTransaction(
+            safeInfo,
+            safeInfo.owners.subList(2, safeInfo.owners.size).toSet(),
+            setOf(owner, extension)
+        )
     }
 
     override fun estimate() {
 
         viewModelScope.launch(Dispatchers.IO + errorHandler) {
 
-            val safeInfo = gnosisSafeRepository.loadInfo(safeAddress).awaitFirst()
-            val paymentToken = tokenRepository.loadPaymentToken(safeAddress).await()
+            val executeInfo = transactionExecutionRepository.loadExecuteInformation(safeAddress, paymentToken.address, pairingTransaction).await()
 
-            val owner = safeInfo.owners[0]
-            val extension = Solidity.Address(BigInteger.valueOf(Long.MAX_VALUE))
-            val transaction = recoverSafeOwnersHelper.buildRecoverTransaction(
-                safeInfo,
-                safeInfo.owners.subList(2, safeInfo.owners.size).toSet(),
-                setOf(owner, extension)
-            )
-
-            balanceChannel = tokenRepository.loadTokenBalances(safeAddress, listOf(paymentToken))
-                .repeatWhen { it.delay(BALANCE_REQUEST_INTERVAL_SECONDS, TimeUnit.SECONDS) }
-                .retryWhen { it.delay(BALANCE_REQUEST_INTERVAL_SECONDS, TimeUnit.SECONDS) }
-                .map {
-                    it[0]
-                }
-                .openSubscription()
-
-
-            balanceChannel.consumeEach {
-
-                val balance = it.second ?: BigInteger.ZERO
-
-                val executeInfo = transactionExecutionRepository.loadExecuteInformation(safeAddress, paymentToken.address, transaction).await()
-
-                val gasFee = with(executeInfo) {
-                    (txGas + dataGas + operationalGas) * gasPrice
-                }
-                _state.postValue(
-                    ViewUpdate.Balance(
-                        false,
-                        paymentToken.displayString(balance),
-                        ERC20TokenWithBalance(paymentToken, gasFee).displayString(roundingMode = RoundingMode.UP),
-                        paymentToken.displayString(balance - gasFee),
-                        paymentToken.symbol,
-                        balance > gasFee
-
-                    )
-                )
+            val gasFee = with(executeInfo) {
+                (txGas + dataGas + operationalGas) * gasPrice
             }
+            _state.postValue(
+                ViewUpdate.Balance(
+                    false,
+                    paymentToken.displayString(executeInfo.balance),
+                    ERC20TokenWithBalance(paymentToken, gasFee).displayString(roundingMode = RoundingMode.UP),
+                    paymentToken.displayString(executeInfo.balance - gasFee),
+                    paymentToken.symbol,
+                    executeInfo.balance > gasFee
+
+                )
+            )
         }
     }
 
@@ -167,12 +159,6 @@ class PairingAuthenticatorViewModel @Inject constructor(
             }
         }
     }
-
-    override fun onCleared() {
-        super.onCleared()
-        balanceChannel.cancel()
-    }
-
 
     private suspend fun parseChromeExtensionPayload(payload: String): PushServiceTemporaryAuthorization = coroutineScope {
         moshi.adapter(PushServiceTemporaryAuthorization::class.java).fromJson(payload)!!

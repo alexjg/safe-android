@@ -5,11 +5,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.Observer
-import androidx.lifecycle.lifecycleScope
 import com.jakewharton.rxbinding2.view.clicks
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
-import kotlinx.android.synthetic.main.screen_connect_extension_start.*
 import pm.gnosis.heimdall.BuildConfig
 import pm.gnosis.heimdall.R
 import pm.gnosis.heimdall.data.repositories.TransactionData
@@ -37,10 +35,11 @@ import kotlinx.android.synthetic.main.include_transfer_summary.transfer_data_fee
 import kotlinx.android.synthetic.main.include_transfer_summary.transfer_data_safe_balance_after_value as balanceAfterValue
 import kotlinx.android.synthetic.main.include_transfer_summary.transfer_data_safe_balance_before_value as balanceBeforeValue
 import kotlinx.android.synthetic.main.screen_connect_extension_start.replace_extension_back_arrow as backArrow
-import kotlinx.android.synthetic.main.screen_connect_extension_start.replace_extension_coordinator as coordinator
 import kotlinx.android.synthetic.main.screen_connect_extension_start.replace_extension_bottom_panel as bottomPanel
+import kotlinx.android.synthetic.main.screen_connect_extension_start.replace_extension_coordinator as coordinator
 import kotlinx.android.synthetic.main.screen_connect_extension_start.replace_extension_info_2 as authenticatorLink
 import kotlinx.android.synthetic.main.screen_connect_extension_start.replace_extension_progress_bar as progressBar
+import kotlinx.android.synthetic.main.screen_replace_extension_start.replace_extension_swipe_to_refresh as swipeToRefresh
 
 class ConnectExtensionStartActivity : ViewModelActivity<PairingAuthenticatorContract>() {
 
@@ -115,13 +114,16 @@ class ConnectExtensionStartActivity : ViewModelActivity<PairingAuthenticatorCont
             }
         })
 
-        lifecycleScope.launchWhenStarted {
+        swipeToRefresh.setOnRefreshListener {
             viewModel.estimate()
+            swipeToRefresh.isRefreshing = false
         }
     }
 
     override fun onStart() {
         super.onStart()
+
+        viewModel.estimate()
 
         backArrow.setOnClickListener {
             finish()

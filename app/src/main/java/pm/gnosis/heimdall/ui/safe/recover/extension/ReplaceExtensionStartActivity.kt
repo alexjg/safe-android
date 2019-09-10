@@ -5,8 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.Observer
-import androidx.lifecycle.lifecycleScope
-import com.jakewharton.rxbinding2.view.clicks
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
 import pm.gnosis.heimdall.R
@@ -28,6 +26,7 @@ import kotlinx.android.synthetic.main.include_transfer_summary.transfer_data_saf
 import kotlinx.android.synthetic.main.screen_replace_extension_start.replace_extension_back_arrow as backArrow
 import kotlinx.android.synthetic.main.screen_replace_extension_start.replace_extension_bottom_panel as bottomPanel
 import kotlinx.android.synthetic.main.screen_replace_extension_start.replace_extension_progress_bar as progressBar
+import kotlinx.android.synthetic.main.screen_replace_extension_start.replace_extension_swipe_to_refresh as swipeToRefresh
 
 class ReplaceExtensionStartActivity : ViewModelActivity<PairingAuthenticatorContract>() {
 
@@ -73,13 +72,16 @@ class ReplaceExtensionStartActivity : ViewModelActivity<PairingAuthenticatorCont
             }
         })
 
-        lifecycleScope.launchWhenStarted {
+        swipeToRefresh.setOnRefreshListener {
             viewModel.estimate()
+            swipeToRefresh.isRefreshing = false
         }
     }
 
     override fun onStart() {
         super.onStart()
+
+        viewModel.estimate()
 
         backArrow.setOnClickListener {
             finish()
@@ -89,16 +91,14 @@ class ReplaceExtensionStartActivity : ViewModelActivity<PairingAuthenticatorCont
             startActivity(PaymentTokensActivity.createIntent(this, safe))
         }
 
-        disposables += feesInfo.clicks()
-            .subscribeBy {
-                InfoTipDialogBuilder.build(this, R.layout.dialog_network_fee, R.string.ok).show()
-            }
+        feesInfo.setOnClickListener {
+            InfoTipDialogBuilder.build(this, R.layout.dialog_network_fee, R.string.ok).show()
+        }
 
         disposables += bottomPanel.forwardClicks.subscribeBy {
             startActivity(ReplaceExtensionQrActivity.createIntent(this, safe))
         }
     }
-
 
     companion object {
 

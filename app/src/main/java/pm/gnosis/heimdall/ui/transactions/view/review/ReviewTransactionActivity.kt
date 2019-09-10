@@ -170,7 +170,10 @@ class ReviewTransactionActivity : ViewModelActivity<ReviewTransactionContract>()
 
     override fun onConfirmationDialogDismiss() {
         // If we have a reference id then we have been opened from a external request and should just close the screen without opening a new one
-        if (referenceId ?: -1 < 0) {
+
+        referenceId?.let {
+            finish()
+        } ?: run {
             startActivity(
                 SafeMainActivity.createIntent(
                     this,
@@ -178,8 +181,6 @@ class ReviewTransactionActivity : ViewModelActivity<ReviewTransactionContract>()
                     R.string.tab_title_transactions
                 )
             )
-        } else {
-            finish()
         }
     }
 
