@@ -16,6 +16,7 @@ import pm.gnosis.heimdall.data.repositories.TransactionExecutionRepository
 import pm.gnosis.heimdall.data.repositories.models.ERC20Token
 import pm.gnosis.heimdall.data.repositories.models.ERC20TokenWithBalance
 import pm.gnosis.heimdall.data.repositories.models.SafeTransaction
+import pm.gnosis.heimdall.di.modules.ApplicationModule
 import pm.gnosis.heimdall.ui.safe.helpers.RecoverSafeOwnersHelper
 import pm.gnosis.model.Solidity
 import timber.log.Timber
@@ -68,7 +69,8 @@ class PairingAuthenticatorViewModel @Inject constructor(
     private val tokenRepository: TokenRepository,
     private val transactionExecutionRepository: TransactionExecutionRepository,
     private val pushServiceRepository: PushServiceRepository,
-    private val moshi: Moshi
+    private val moshi: Moshi,
+    private val appDispatcher: ApplicationModule.AppCoroutineDispatchers
 ) : PairingAuthenticatorContract() {
 
     private val errorHandler = CoroutineExceptionHandler { _, e ->
@@ -89,7 +91,7 @@ class PairingAuthenticatorViewModel @Inject constructor(
 
     override fun setup(safeAddress: Solidity.Address) {
         this.safeAddress = safeAddress
-        runBlocking(Dispatchers.IO + errorHandler) {
+        runBlocking(appDispatcher.background + errorHandler) {
             loadPaymentToken()
             buildPairingTransaction()
         }
@@ -114,7 +116,7 @@ class PairingAuthenticatorViewModel @Inject constructor(
 
     override fun estimate() {
 
-        viewModelScope.launch(Dispatchers.IO + errorHandler) {
+        viewModelScope.launch(appDispatcher.background + errorHandler) {
 
             val executeInfo = transactionExecutionRepository.loadExecuteInformation(safeAddress, paymentToken.address, pairingTransaction).await()
 
@@ -137,7 +139,7 @@ class PairingAuthenticatorViewModel @Inject constructor(
 
     override fun pair(payload: String) {
 
-        viewModelScope.launch(Dispatchers.IO + errorHandler) {
+        viewModelScope.launch(appDispatcher.background + errorHandler) {
 
             _state.postValue(
                 ViewUpdate.Pairing(true)
