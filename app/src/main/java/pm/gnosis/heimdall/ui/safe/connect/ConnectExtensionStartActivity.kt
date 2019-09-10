@@ -133,10 +133,9 @@ class ConnectExtensionStartActivity : ViewModelActivity<PairingAuthenticatorCont
             startActivity(PaymentTokensActivity.createIntent(this, safe))
         }
 
-        disposables += feesInfo.clicks()
-            .subscribeBy {
-                InfoTipDialogBuilder.build(this, R.layout.dialog_network_fee, R.string.ok).show()
-            }
+        feesInfo.setOnClickListener {
+            InfoTipDialogBuilder.build(this, R.layout.dialog_network_fee, R.string.ok).show()
+        }
 
         disposables += bottomPanel.forwardClicks.subscribeBy {
             QRCodeScanActivity.startForResult(this)
