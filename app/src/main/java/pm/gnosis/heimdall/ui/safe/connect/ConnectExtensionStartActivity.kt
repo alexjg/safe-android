@@ -69,6 +69,7 @@ class ConnectExtensionStartActivity : ViewModelActivity<PairingAuthenticatorCont
 
         viewModel.observableState.observe(this, Observer {
 
+            swipeToRefresh.isRefreshing = false
             onLoading(it.isLoading)
 
             when(it) {
@@ -116,7 +117,6 @@ class ConnectExtensionStartActivity : ViewModelActivity<PairingAuthenticatorCont
 
         swipeToRefresh.setOnRefreshListener {
             viewModel.estimate()
-            swipeToRefresh.isRefreshing = false
         }
     }
 

@@ -52,6 +52,8 @@ class ReplaceExtensionStartActivity : ViewModelActivity<PairingAuthenticatorCont
 
         viewModel.observableState.observe(this, Observer {
 
+            swipeToRefresh.isRefreshing = false
+
             when (it) {
 
                 is PairingAuthenticatorContract.ViewUpdate.Balance -> {
@@ -74,7 +76,6 @@ class ReplaceExtensionStartActivity : ViewModelActivity<PairingAuthenticatorCont
 
         swipeToRefresh.setOnRefreshListener {
             viewModel.estimate()
-            swipeToRefresh.isRefreshing = false
         }
     }
 
