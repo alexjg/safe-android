@@ -106,10 +106,8 @@ class PairingAuthenticatorViewModel @Inject constructor(
             )
 
             val executeInfo = transactionExecutionRepository.loadExecuteInformation(safeAddress, paymentToken.address, pairingTransaction).await()
+            val gasFee = executeInfo.gasCosts()
 
-            val gasFee = with(executeInfo) {
-                (txGas + dataGas + operationalGas) * gasPrice
-            }
             _state.postValue(
                 ViewUpdate.Balance(
                     false,
