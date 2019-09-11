@@ -5,7 +5,10 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.squareup.moshi.Moshi
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx2.await
 import kotlinx.coroutines.rx2.awaitFirst
 import pm.gnosis.heimdall.data.remote.models.push.PushServiceTemporaryAuthorization
@@ -88,35 +91,39 @@ class PairingAuthenticatorViewModel @Inject constructor(
     private lateinit var paymentToken: ERC20Token
     private lateinit var pairingTransaction: SafeTransaction
 
+    private val setupJobs = mutableListOf<Job>()
 
     override fun setup(safeAddress: Solidity.Address) {
         this.safeAddress = safeAddress
-        runBlocking(appDispatcher.background + errorHandler) {
-            loadPaymentToken()
-            buildPairingTransaction()
+        setupJobs.add(loadPaymentToken())
+        setupJobs.add(buildPairingTransaction())
+    }
+
+    private fun loadPaymentToken(): Job {
+        return viewModelScope.launch(appDispatcher.background + errorHandler) {
+            paymentToken = tokenRepository.loadPaymentToken(safeAddress).await()
         }
     }
 
-    private suspend fun loadPaymentToken() = coroutineScope {
-        paymentToken = tokenRepository.loadPaymentToken(safeAddress).await()
-    }
+    private fun buildPairingTransaction(): Job {
+        return viewModelScope.launch(appDispatcher.background + errorHandler) {
+            val safeInfo = gnosisSafeRepository.loadInfo(safeAddress).awaitFirst()
 
-    private suspend fun buildPairingTransaction() = coroutineScope {
-
-        val safeInfo = gnosisSafeRepository.loadInfo(safeAddress).awaitFirst()
-
-        val owner = safeInfo.owners[0]
-        val extension = Solidity.Address(BigInteger.valueOf(Long.MAX_VALUE))
-        pairingTransaction = recoverSafeOwnersHelper.buildRecoverTransaction(
-            safeInfo,
-            safeInfo.owners.subList(2, safeInfo.owners.size).toSet(),
-            setOf(owner, extension)
-        )
+            val owner = safeInfo.owners[0]
+            val extension = Solidity.Address(BigInteger.valueOf(Long.MAX_VALUE))
+            pairingTransaction = recoverSafeOwnersHelper.buildRecoverTransaction(
+                safeInfo,
+                safeInfo.owners.subList(2, safeInfo.owners.size).toSet(),
+                setOf(owner, extension)
+            )
+        }
     }
 
     override fun estimate() {
 
         viewModelScope.launch(appDispatcher.background + errorHandler) {
+
+            setupJobs.forEach { it.join() }
 
             val executeInfo = transactionExecutionRepository.loadExecuteInformation(safeAddress, paymentToken.address, pairingTransaction).await()
 
