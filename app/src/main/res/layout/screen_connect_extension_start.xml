@@ -24,7 +24,7 @@
         android:layout_width="0dp"
         android:layout_height="@dimen/toolbar_height"
         android:gravity="center_vertical"
-        android:text="@string/connect_browser_extension"
+        android:text="@string/connect_authenticator"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/replace_extension_back_arrow"
         app:layout_constraintTop_toTopOf="parent" />

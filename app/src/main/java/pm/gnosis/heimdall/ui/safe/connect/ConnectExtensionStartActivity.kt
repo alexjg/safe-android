@@ -99,7 +99,7 @@ class ConnectExtensionStartActivity : ViewModelActivity<PairingAuthenticatorCont
                                     ReviewTransactionActivity.createIntent(
                                         context = this,
                                         safe = intent.getStringExtra(EXTRA_SAFE_ADDRESS).asEthereumAddress()!!,
-                                        txData = TransactionData.ConnectExtension(it.extension)
+                                        txData = TransactionData.ConnectAuthenticator(it.extension)
                                     )
                                 )
                             }
